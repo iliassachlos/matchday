@@ -1,6 +1,7 @@
 package com.matchday.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -23,6 +24,10 @@ class AuthenticationFlowTest extends IntegrationTestBase {
     private static final String EMAIL = "maria@matchday.test";
     private static final String PASSWORD = "correct-horse-battery";
 
+    // Seeded by V2__seed_staff_account.sql
+    private static final String STAFF_EMAIL = "staff@matchday.local";
+    private static final String STAFF_PASSWORD = "staff-password";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -34,7 +39,10 @@ class AuthenticationFlowTest extends IntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        userRepository.deleteAll();
+        // Everyone except the seeded staff account, which the migration creates only once
+        userRepository.deleteAll(userRepository.findAll().stream()
+                .filter(user -> !STAFF_EMAIL.equals(user.getEmail()))
+                .toList());
     }
 
     private String registerPayload(String email, String password, String displayName) {
@@ -55,9 +63,13 @@ class AuthenticationFlowTest extends IntegrationTestBase {
                         .content(registerPayload(EMAIL, PASSWORD, "Maria")))
                 .andExpect(status().isCreated());
 
+        return login(EMAIL, PASSWORD);
+    }
+
+    private String login(String email, String password) throws Exception {
         String body = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginPayload(EMAIL, PASSWORD)))
+                        .content(loginPayload(email, password)))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -108,7 +120,7 @@ class AuthenticationFlowTest extends IntegrationTestBase {
                         .content(registerPayload(EMAIL, PASSWORD, "Someone Else")))
                 .andExpect(status().isConflict());
 
-        assertThat(userRepository.count()).isEqualTo(1);
+        assertThat(userRepository.findAll()).filteredOn(user -> EMAIL.equals(user.getEmail())).hasSize(1);
     }
 
     @Test
@@ -121,7 +133,7 @@ class AuthenticationFlowTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.errors.email").exists())
                 .andExpect(jsonPath("$.errors.password").exists());
 
-        assertThat(userRepository.count()).isZero();
+        assertThat(userRepository.findByEmail("not-an-email")).isEmpty();
     }
 
     @Test
@@ -187,5 +199,16 @@ class AuthenticationFlowTest extends IntegrationTestBase {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(EMAIL))
                 .andExpect(jsonPath("$.displayName").value("Maria"));
+    }
+
+    @Test
+    @DisplayName("the seeded staff account can log in and carries ROLE_ADMIN")
+    void seededStaffIsAdmin() throws Exception {
+        String token = login(STAFF_EMAIL, STAFF_PASSWORD);
+
+        mockMvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(STAFF_EMAIL))
+                .andExpect(jsonPath("$.roles", hasItem(Role.ROLE_ADMIN.name())));
     }
 }

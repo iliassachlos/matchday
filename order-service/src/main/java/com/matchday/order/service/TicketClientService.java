@@ -2,6 +2,7 @@ package com.matchday.order.service;
 
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -13,12 +14,19 @@ import com.matchday.order.dto.SellRequest;
 import com.matchday.order.exception.SeatNotFoundException;
 import com.matchday.order.exception.TicketServiceUnavailableException;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class TicketClientService {
+    public static final String SERVICE_TOKEN_HEADER = "X-Service-Token";
+
     private final RestClient ticketRestClient;
+    private final String serviceToken;
+
+    public TicketClientService(
+            RestClient ticketRestClient,
+            @Value("${matchday.ticket-service.service-token}") String serviceToken) {
+        this.ticketRestClient = ticketRestClient;
+        this.serviceToken = serviceToken;
+    }
 
     /**
      * Call ticket-service to get information about a seat
@@ -54,7 +62,11 @@ public class TicketClientService {
         try {
             return ticketRestClient.post()
                     .uri("/api/v1/seats/{id}/sell", seatId)
-                    .headers(headers -> headers.setBearerAuth(bearerToken))
+                    .headers(headers -> {
+                        headers.setBearerAuth(bearerToken);
+                        // Without it ticket-service refuses: only order-service may sell
+                        headers.set(SERVICE_TOKEN_HEADER, serviceToken);
+                    })
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(new SellRequest(orderId))
                     .exchange((request, response) -> {

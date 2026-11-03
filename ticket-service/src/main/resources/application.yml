@@ -62,3 +62,7 @@ matchday:
 
   tickets:
     signing-secret: ${TICKET_SIGNING_SECRET:local-dev-ticket-signing-secret}
+
+  # Shared with order-service: proves a sell request comes from it, not from a user
+  internal:
+    service-token: ${INTERNAL_SERVICE_TOKEN:local-dev-internal-service-token}

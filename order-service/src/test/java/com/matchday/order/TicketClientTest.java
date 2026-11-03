@@ -33,6 +33,7 @@ class TicketClientTest {
 
     private static final String BASE = "http://ticket-service";
     private static final String TOKEN = "maria-token";
+    private static final String SERVICE_TOKEN = "order-service-token";
     private static final UUID SEAT = UUID.randomUUID();
     private static final UUID ORDER = UUID.randomUUID();
 
@@ -43,7 +44,7 @@ class TicketClientTest {
     void setUp() {
         RestClient.Builder builder = RestClient.builder().baseUrl(BASE);
         server = MockRestServiceServer.bindTo(builder).build();
-        client = new TicketClientService(builder.build());
+        client = new TicketClientService(builder.build(), SERVICE_TOKEN);
     }
 
     @Test
@@ -72,11 +73,12 @@ class TicketClientTest {
     }
 
     @Test
-    @DisplayName("200 from sell means the seat is ours")
+    @DisplayName("200 from sell means the seat is ours; the request proves it comes from order-service")
     void sellAccepted() {
         server.expect(requestTo(BASE + "/api/v1/seats/" + SEAT + "/sell"))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer " + TOKEN))
+                .andExpect(header(TicketClientService.SERVICE_TOKEN_HEADER, SERVICE_TOKEN))
                 .andExpect(jsonPath("$.orderId").value(ORDER.toString()))
                 .andRespond(withSuccess());
 

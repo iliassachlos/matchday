@@ -13,12 +13,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
+import com.matchday.ticket.config.SecurityConfig;
 import com.matchday.ticket.entity.Event;
 import com.matchday.ticket.entity.Seat;
 import com.matchday.ticket.entity.SeatStatus;
@@ -51,6 +53,9 @@ class SeatSaleTest extends IntegrationTestBase {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Value("${matchday.internal.service-token}")
+    private String serviceToken;
+
     private UUID seatId;
 
     @BeforeEach
@@ -79,11 +84,52 @@ class SeatSaleTest extends IntegrationTestBase {
                 .andExpect(status().isOk());
     }
 
+    // As order-service calls it: the buyer's token plus the service token
     private ResultActions sellAs(UUID userId, UUID orderId) throws Exception {
         return mockMvc.perform(post("/api/v1/seats/{id}/sell", seatId)
                 .with(as(userId))
+                .header(SecurityConfig.SERVICE_TOKEN_HEADER, serviceToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"orderId\":\"" + orderId + "\"}"));
+    }
+
+    @Test
+    @DisplayName("Maria cannot sell herself the seat she holds by calling sell directly, without paying")
+    void userCannotCallSellDirectly() throws Exception {
+        reserveAs(MARIA);
+
+        mockMvc.perform(post("/api/v1/seats/{id}/sell", seatId)
+                        .with(as(MARIA))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"orderId\":\"" + UUID.randomUUID() + "\"}"))
+                .andExpect(status().isForbidden());
+
+        assertThat(seatRepository.findById(seatId).orElseThrow().getStatus()).isEqualTo(SeatStatus.RESERVED);
+    }
+
+    @Test
+    @DisplayName("a wrong service token is refused like a missing one")
+    void wrongServiceTokenIsRefused() throws Exception {
+        reserveAs(MARIA);
+
+        mockMvc.perform(post("/api/v1/seats/{id}/sell", seatId)
+                        .with(as(MARIA))
+                        .header(SecurityConfig.SERVICE_TOKEN_HEADER, "guessed")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"orderId\":\"" + UUID.randomUUID() + "\"}"))
+                .andExpect(status().isForbidden());
+
+        assertThat(seatRepository.findById(seatId).orElseThrow().getStatus()).isEqualTo(SeatStatus.RESERVED);
+    }
+
+    @Test
+    @DisplayName("the service token alone is not enough: sell still needs the buyer's token")
+    void serviceTokenWithoutBuyerIsUnauthorized() throws Exception {
+        mockMvc.perform(post("/api/v1/seats/{id}/sell", seatId)
+                        .header(SecurityConfig.SERVICE_TOKEN_HEADER, serviceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"orderId\":\"" + UUID.randomUUID() + "\"}"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

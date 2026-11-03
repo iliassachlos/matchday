@@ -47,6 +47,8 @@ jwt:
 matchday:
   ticket-service:
     url: ${TICKET_SERVICE_URL:http://localhost:8081}
+    # Sent on every sell; must match ticket-service's matchday.internal.service-token
+    service-token: ${INTERNAL_SERVICE_TOKEN:local-dev-internal-service-token}
   user-service:
     url: ${USER_SERVICE_URL:http://localhost:8080}
   outbox:
