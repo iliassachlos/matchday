@@ -1,6 +1,7 @@
 package com.matchday.ticket.repository;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,6 +15,8 @@ import com.matchday.ticket.entity.Ticket;
 public interface TicketRepository extends JpaRepository<Ticket, UUID> {
 
     Optional<Ticket> findByOrderId(UUID orderId);
+
+    List<Ticket> findByUserIdOrderByIssuedAtDesc(UUID userId);
 
     /**
      * Marks a ticket as used if it is currently valid.

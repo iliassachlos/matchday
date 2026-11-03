@@ -1,14 +1,17 @@
 package com.matchday.ticket.service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.matchday.ticket.dto.MyTicketResponse;
 import com.matchday.ticket.dto.OrderPaidEvent;
 import com.matchday.ticket.dto.TicketDetails;
+import com.matchday.ticket.entity.Event;
 import com.matchday.ticket.entity.Seat;
 import com.matchday.ticket.entity.SeatStatus;
 import com.matchday.ticket.entity.Ticket;
@@ -79,6 +82,34 @@ public class TicketService {
                 seat.getSection(),
                 seat.getRowLabel(),
                 seat.getNumber());
+    }
+
+    /**
+     * Get the list of tickets held by the given user, most recent first.
+     *
+     * @param userId - the holder, taken from the token
+     * @return the user's tickets, empty if they have none
+     */
+    @Transactional(readOnly = true)
+    public List<MyTicketResponse> listMine(UUID userId) {
+        return ticketRepository.findByUserIdOrderByIssuedAtDesc(userId).stream()
+                .map(ticket -> {
+                    Seat seat = seatRepository.findById(ticket.getSeatId()).orElseThrow(SeatNotFoundException::new);
+                    Event event = seat.getEvent();
+
+                    return new MyTicketResponse(
+                            ticket.getId(),
+                            ticket.getStatus(),
+                            ticketCodeService.codeFor(ticket.getId()),
+                            event.getName(),
+                            event.getVenue().getName(),
+                            event.getStartsAt(),
+                            seat.getSection(),
+                            seat.getRowLabel(),
+                            seat.getNumber(),
+                            ticket.getUsedAt());
+                })
+                .toList();
     }
 
     /**
