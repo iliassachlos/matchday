@@ -14,7 +14,6 @@ import { Button } from '@/shared/components/ui/button'
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,

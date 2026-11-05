@@ -1,3 +1,5 @@
+import { EventsView } from '@/features/events/views/events-view'
+
 export const HomePage = () => {
-  return <h1 className="text-2xl font-semibold">Matches</h1>
+  return <EventsView />
 }
