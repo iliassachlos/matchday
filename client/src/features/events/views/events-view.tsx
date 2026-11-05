@@ -8,7 +8,6 @@ export const EventsView = () => {
 
   if (isPending) return <PageSpinner />
 
-  // Checks for missing data, not for `error`: a failed 15s refresh keeps the last list on screen
   if (!events) {
     return (
       <div className="flex flex-col items-start gap-3">

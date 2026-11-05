@@ -11,13 +11,7 @@ import {
 } from '@/features/auth/schemas/login-schema'
 import { RhfField } from '@/shared/components/rhf-field'
 import { Button } from '@/shared/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/shared/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/shared/components/ui/card'
 
 export const LoginView = () => {
   const { mutate: login, isPending } = useLogin()

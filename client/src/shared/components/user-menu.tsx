@@ -42,7 +42,6 @@ export const UserMenu = () => {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-60">
-        {/* Base UI requires a label to sit inside a group */}
         <DropdownMenuGroup>
           <DropdownMenuLabel className="flex flex-col gap-0.5 px-2 py-1.5">
             <span className="flex items-center gap-2 text-sm font-medium text-foreground">

@@ -9,17 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card'
+import { formatKickoff } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
-
-// Kick-off in the stadium's time zone, not the viewer's: 21:45 in Athens is the time on the ticket
-const kickoffFormat = new Intl.DateTimeFormat('en-GB', {
-  weekday: 'short',
-  day: 'numeric',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-  timeZone: 'Europe/Athens',
-})
 
 type Props = {
   event: EventSummary
@@ -36,7 +27,7 @@ export const EventCard = ({ event }: Props) => {
       )}
     >
       <CardHeader>
-        <CardDescription>{kickoffFormat.format(new Date(event.startsAt))}</CardDescription>
+        <CardDescription>{formatKickoff(event.startsAt)}</CardDescription>
         <CardTitle className="text-lg">{event.name}</CardTitle>
       </CardHeader>
 
