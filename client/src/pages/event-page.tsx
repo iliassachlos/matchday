@@ -1,5 +1,6 @@
 import { useParams, useSearchParams } from 'react-router'
 
+import { SectionView } from '@/features/seats/views/section-view'
 import { StadiumView } from '@/features/seats/views/stadium-view'
 
 export const EventPage = () => {
@@ -12,8 +13,12 @@ export const EventPage = () => {
     setSearchParams({ section: name })
   }
 
+  const handleBack = () => {
+    setSearchParams({})
+  }
+
   if (section) {
-    return <h1 className="text-2xl font-semibold">{section}: seat grid comes in step 3</h1>
+    return <SectionView key={section} eventId={eventId} section={section} onBack={handleBack} />
   }
 
   return <StadiumView eventId={eventId} onSelectSection={handleSelectSection} />

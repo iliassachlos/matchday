@@ -9,9 +9,16 @@ export type Seat = {
   status: SeatStatus
 }
 
+export type SeatRow = {
+  label: string
+  seats: Seat[]
+}
+
 export type SectionSummary = {
   name: string
   priceCents: number
   totalSeats: number
   availableSeats: number
 }
+
+export type SeatState = 'available' | 'selected' | 'mine' | 'held' | 'sold'
