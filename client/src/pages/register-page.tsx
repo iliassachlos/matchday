@@ -1,3 +1,9 @@
+import { RegisterView } from '@/features/auth/views/register-view'
+
 export const RegisterPage = () => {
-  return <h1 className="text-2xl font-semibold">Create an account</h1>
+  return (
+    <div className="mx-auto w-full max-w-sm">
+      <RegisterView />
+    </div>
+  )
 }

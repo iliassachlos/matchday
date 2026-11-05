@@ -1,10 +1,17 @@
 import { Link, NavLink } from 'react-router'
 
-import { cn } from '@/shared/lib/utils'
 import { Logo } from '@/shared/components/logo'
-import { navItems } from '@/shared/components/nav-items'
+import { Button } from '@/shared/components/ui/button'
+import { useNavItems } from '@/shared/hooks/use-nav-items'
+import { cn } from '@/shared/lib/utils'
+import { useAuthStore } from '@/shared/store/auth-store'
 
 export const AppHeader = () => {
+  const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
+
+  const navItems = useNavItems()
+
   return (
     <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4">
@@ -13,7 +20,7 @@ export const AppHeader = () => {
           <span className="text-lg font-semibold tracking-tight">matchday</span>
         </Link>
 
-        <nav className="hidden gap-1 md:flex">
+        <nav className="hidden items-center gap-1 md:flex">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -29,6 +36,15 @@ export const AppHeader = () => {
               {item.label}
             </NavLink>
           ))}
+
+          {user && (
+            <>
+              <span className="ml-3 text-sm text-muted-foreground">{user.displayName}</span>
+              <Button variant="ghost" size="sm" onClick={logout}>
+                Log out
+              </Button>
+            </>
+          )}
         </nav>
       </div>
     </header>

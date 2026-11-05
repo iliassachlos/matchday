@@ -1,3 +1,9 @@
+import { LoginView } from '@/features/auth/views/login-view'
+
 export const LoginPage = () => {
-  return <h1 className="text-2xl font-semibold">Log in</h1>
+  return (
+    <div className="mx-auto w-full max-w-sm">
+      <LoginView />
+    </div>
+  )
 }
